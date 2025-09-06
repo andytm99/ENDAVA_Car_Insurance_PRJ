@@ -1,0 +1,5 @@
+# Created at 2025-09-06T11:38:04.132
+Boot Manifest-JAR contains absolute paths in classpath 'F:\ENDAVA\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+
