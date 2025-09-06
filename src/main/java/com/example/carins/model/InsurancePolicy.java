@@ -24,7 +24,9 @@ public class InsurancePolicy {
 
     private String provider;
     private LocalDate startDate;
-    private LocalDate endDate; // nullable == open-ended
+    @NotNull(message = "End date is required")
+    @jakarta.persistence.Column(nullable = false)
+    private LocalDate endDate;
 
     public InsurancePolicy() {
     }
