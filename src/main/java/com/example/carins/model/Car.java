@@ -12,8 +12,9 @@ public class Car {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    @NotBlank(message = "VIN must not be blank")
     @Size(min = 5, max = 32)
+    @Column(unique = true, nullable = false)
     private String vin;
 
     private String make;
