@@ -103,8 +103,25 @@ public class CarController {
 
     @GetMapping("/cars/{carId}/insurance-valid")
     public ResponseEntity<?> isInsuranceValid(@PathVariable Long carId, @RequestParam String date) {
-        // TODO: validate date format and handle errors consistently
-        LocalDate d = LocalDate.parse(date);
+        // Validate car existence
+        var carOpt = service.listCars().stream().filter(c -> c.getId().equals(carId)).findFirst();
+        if (carOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Car not found");
+        }
+
+        // Validate date format
+        LocalDate d;
+        try {
+            d = LocalDate.parse(date);
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().body("Invalid date format. Use ISO YYYY-MM-DD.");
+        }
+
+        // Reject impossible dates
+        if (d.isBefore(LocalDate.of(1900, 1, 1)) || d.isAfter(LocalDate.of(2100, 12, 31))) {
+            return ResponseEntity.badRequest().body("Date out of supported range (1900-01-01 to 2100-12-31).");
+        }
+
         boolean valid = service.isInsuranceValid(carId, d);
         return ResponseEntity.ok(new InsuranceValidityResponse(carId, d.toString(), valid));
     }
