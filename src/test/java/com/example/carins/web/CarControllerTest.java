@@ -24,6 +24,12 @@ class CarControllerTest {
     @MockBean
     private CarService carService;
 
+    @MockBean
+    private com.example.carins.repo.InsurancePolicyRepository insurancePolicyRepository;
+
+    @MockBean
+    private com.example.carins.repo.InsuranceClaimRepository insuranceClaimRepository;
+
     // Mock a car for valid tests
     private Car mockCar() {
         Car car = new Car();
