@@ -10,6 +10,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -156,5 +157,56 @@ class CarControllerTest {
                 .content(json))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("Car not found"));
+    }
+
+    @Test
+    void getCarHistory_returns404ForMissingCar() throws Exception {
+        when(carService.listCars()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/cars/999/history"))
+                .andExpect(status().isNotFound())
+                .andExpect(content().string("Car not found"));
+    }
+
+    @Test
+    void getCarHistory_returnsChronologicalEvents() throws Exception {
+        Car car = mockCar();
+
+        when(carService.listCars()).thenReturn(List.of(car));
+
+        // Mock claims
+        InsuranceClaim claim = new InsuranceClaim();
+        var claimIdField = InsuranceClaim.class.getDeclaredField("id");
+        claimIdField.setAccessible(true);
+        claimIdField.set(claim, 1L);
+        claim.setCar(car);
+        claim.setClaimDate(LocalDate.of(2025, 9, 6));
+        claim.setDescription("Accident");
+        claim.setAmount(BigDecimal.valueOf(1200.50));
+
+        when(insuranceClaimRepository.findByCarIdOrderByClaimDateAsc(1L)).thenReturn(List.of(claim));
+
+        // Mock policies
+        com.example.carins.model.InsurancePolicy policy = new com.example.carins.model.InsurancePolicy();
+        var policyIdField = com.example.carins.model.InsurancePolicy.class.getDeclaredField("id");
+        policyIdField.setAccessible(true);
+        policyIdField.set(policy, 2L);
+        policy.setCar(car);
+        policy.setStartDate(LocalDate.of(2025, 1, 1));
+        policy.setEndDate(LocalDate.of(2025, 12, 31));
+        policy.setProvider("ProviderX");
+
+        when(insurancePolicyRepository.findAll()).thenReturn(List.of(policy));
+
+        mockMvc.perform(get("/api/cars/1/history"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].type").value("POLICY"))
+                .andExpect(jsonPath("$[0].startDate").value("2025-01-01"))
+                .andExpect(jsonPath("$[0].endDate").value("2025-12-31"))
+                .andExpect(jsonPath("$[0].provider").value("ProviderX"))
+                .andExpect(jsonPath("$[1].type").value("CLAIM"))
+                .andExpect(jsonPath("$[1].date").value("2025-09-06"))
+                .andExpect(jsonPath("$[1].description").value("Accident"))
+                .andExpect(jsonPath("$[1].amount").value(1200.50));
     }
 }
